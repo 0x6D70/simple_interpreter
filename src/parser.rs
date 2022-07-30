@@ -29,29 +29,28 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
+
         let left = self.consume_token(TokenType::Int, "expected integer");
-        let left_value: isize = left.lexeme.parse().unwrap();
+        let mut result: isize = left.lexeme.parse().unwrap();
 
-        if !match_tokens!(self, TokenType::Plus, TokenType::Minus, TokenType::Slash, TokenType::Star) {
-            Self::error(self.peek(), "expected plus, minus, mul or div");
+        while !self.is_at_end() {    
+            if !match_tokens!(self, TokenType::Plus, TokenType::Minus, TokenType::Slash, TokenType::Star) {
+                Self::error(self.peek(), "expected plus, minus, mul or div");
+            }
+    
+            let op = self.previous();
+    
+            let right = self.consume_token(TokenType::Int, "expected integer");
+            let right_value: isize = right.lexeme.parse().unwrap();
+    
+            result = match op.token_type {
+                TokenType::Plus => result + right_value,
+                TokenType::Minus => result - right_value,
+                TokenType::Star => result * right_value,
+                TokenType::Slash => result / right_value,
+                _ => unreachable!()
+            };
         }
-
-        let op = self.previous();
-
-        let right = self.consume_token(TokenType::Int, "expected integer");
-        let right_value: isize = right.lexeme.parse().unwrap();
-
-        println!("left = {:#?}", left);
-        println!("op = {:#?}", op);
-        println!("right = {:#?}", right);
-
-        let result = match op.token_type {
-            TokenType::Plus => left_value + right_value,
-            TokenType::Minus => left_value - right_value,
-            TokenType::Star => left_value * right_value,
-            TokenType::Slash => left_value / right_value,
-            _ => unreachable!()
-        };
 
         println!("{}", result);
     }
