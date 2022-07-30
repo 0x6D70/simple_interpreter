@@ -32,8 +32,8 @@ impl Parser {
         let left = self.consume_token(TokenType::Int, "expected integer");
         let left_value: isize = left.lexeme.parse().unwrap();
 
-        if !match_tokens!(self, TokenType::Plus, TokenType::Minus) {
-            Self::error(self.peek(), "expected plus or minus");
+        if !match_tokens!(self, TokenType::Plus, TokenType::Minus, TokenType::Slash, TokenType::Star) {
+            Self::error(self.peek(), "expected plus, minus, mul or div");
         }
 
         let op = self.previous();
@@ -48,6 +48,8 @@ impl Parser {
         let result = match op.token_type {
             TokenType::Plus => left_value + right_value,
             TokenType::Minus => left_value - right_value,
+            TokenType::Star => left_value * right_value,
+            TokenType::Slash => left_value / right_value,
             _ => unreachable!()
         };
 
