@@ -30,7 +30,7 @@ impl Parser {
 
     pub fn parse(&mut self) {
 
-        let left = self.consume_token(TokenType::Int, "expected integer");
+        let left = self.term();
         let mut result: isize = left.lexeme.parse().unwrap();
 
         while !self.is_at_end() {    
@@ -40,7 +40,7 @@ impl Parser {
     
             let op = self.previous();
     
-            let right = self.consume_token(TokenType::Int, "expected integer");
+            let right = self.term();
             let right_value: isize = right.lexeme.parse().unwrap();
     
             result = match op.token_type {
@@ -53,6 +53,10 @@ impl Parser {
         }
 
         println!("{}", result);
+    }
+
+    fn term(&mut self) -> Token {
+        self.consume_token(TokenType::Int, "expected integer")
     }
 
     fn consume_token(&mut self, token_type: TokenType, msg: &str) -> Token {
