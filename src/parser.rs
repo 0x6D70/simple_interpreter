@@ -2,13 +2,28 @@ use crate::lexer::token::{Token, TokenType};
 use crate::reporter;
 
 #[macro_export]
-macro_rules! match_tokens {
+macro_rules! match_multiple_tokens {
     ( $parser:expr, $( $x:expr ),* ) => {
         {
             let mut ret = false;
             $(
                 if $parser.check($x) {
                     $parser.advance();
+                    ret = true;
+                }
+            )*
+            ret
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! is_token {
+    ( $parser:expr, $( $x:expr ),* ) => {
+        {
+            let mut ret = false;
+            $(
+                if $parser.check($x) {
                     ret = true;
                 }
             )*
@@ -34,11 +49,11 @@ impl Parser {
         let mut result: isize = left.lexeme.parse().unwrap();
 
         while !self.is_at_end() {    
-            if !match_tokens!(self, TokenType::Plus, TokenType::Minus, TokenType::Slash, TokenType::Star) {
+            if !is_token!(self, TokenType::Plus, TokenType::Minus, TokenType::Slash, TokenType::Star) {
                 Self::error(self.peek(), "expected plus, minus, mul or div");
             }
     
-            let op = self.previous();
+            let op = self.advance();
     
             let right = self.term();
             let right_value: isize = right.lexeme.parse().unwrap();
