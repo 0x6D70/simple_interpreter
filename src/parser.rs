@@ -44,11 +44,11 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
-        let mut left = self.factor();
+        let mut left = self.term();
 
         while is_token!(self, TokenType::Plus, TokenType::Minus) {
             let op = self.advance();
-            let right = self.factor();
+            let right = self.term();
 
             left = match op.token_type {
                 TokenType::Plus => left + right,
@@ -60,12 +60,12 @@ impl Parser {
         println!("{}", left);
     }
 
-    fn factor(&mut self) -> isize {
-        let mut left = self.term();
+    fn term(&mut self) -> isize {
+        let mut left = self.factor();
 
         while is_token!(self, TokenType::Star, TokenType::Slash) {
             let op = self.advance();
-            let right = self.term();
+            let right = self.factor();
 
             left = match op.token_type {
                 TokenType::Star => left * right,
@@ -77,7 +77,7 @@ impl Parser {
         left
     }
 
-    fn term(&mut self) -> isize {
+    fn factor(&mut self) -> isize {
         let token = self.consume_token(TokenType::Int, "expected integer");
 
         token.lexeme.parse().unwrap()
