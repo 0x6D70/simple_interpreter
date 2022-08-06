@@ -44,34 +44,43 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
+        let mut left = self.factor();
 
-        let left = self.term();
-        let mut result: isize = left.lexeme.parse().unwrap();
-
-        while !self.is_at_end() {    
-            if !is_token!(self, TokenType::Plus, TokenType::Minus, TokenType::Slash, TokenType::Star) {
-                Self::error(self.peek(), "expected plus, minus, mul or div");
-            }
-    
+        while is_token!(self, TokenType::Plus, TokenType::Minus) {
             let op = self.advance();
-    
-            let right = self.term();
-            let right_value: isize = right.lexeme.parse().unwrap();
-    
-            result = match op.token_type {
-                TokenType::Plus => result + right_value,
-                TokenType::Minus => result - right_value,
-                TokenType::Star => result * right_value,
-                TokenType::Slash => result / right_value,
+            let right = self.factor();
+
+            left = match op.token_type {
+                TokenType::Plus => left + right,
+                TokenType::Minus => left - right,
                 _ => unreachable!()
             };
         }
 
-        println!("{}", result);
+        println!("{}", left);
     }
 
-    fn term(&mut self) -> Token {
-        self.consume_token(TokenType::Int, "expected integer")
+    fn factor(&mut self) -> isize {
+        let mut left = self.term();
+
+        while is_token!(self, TokenType::Star, TokenType::Slash) {
+            let op = self.advance();
+            let right = self.term();
+
+            left = match op.token_type {
+                TokenType::Star => left * right,
+                TokenType::Slash => left / right,
+                _ => unreachable!()
+            };
+        }
+
+        left
+    }
+
+    fn term(&mut self) -> isize {
+        let token = self.consume_token(TokenType::Int, "expected integer");
+
+        token.lexeme.parse().unwrap()
     }
 
     fn consume_token(&mut self, token_type: TokenType, msg: &str) -> Token {
