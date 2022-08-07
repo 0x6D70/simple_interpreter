@@ -1,3 +1,4 @@
+mod evaluate;
 mod lexer;
 mod parser;
 mod reporter;

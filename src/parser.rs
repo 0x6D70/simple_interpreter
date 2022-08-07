@@ -1,5 +1,5 @@
 use crate::lexer::token::{Token, TokenType};
-use crate::reporter;
+use crate::{evaluate, reporter};
 
 #[macro_export]
 macro_rules! match_multiple_tokens {
@@ -33,6 +33,17 @@ macro_rules! is_token {
 }
 
 #[derive(Debug)]
+pub enum Expr {
+    Binary {
+        left: Box<Expr>,
+        op: TokenType,
+        right: Box<Expr>,
+    },
+    Grouping(Box<Expr>),
+    Int(isize),
+}
+
+#[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
@@ -46,68 +57,70 @@ impl Parser {
     pub fn parse(&mut self) {
         let result = self.expr();
 
-        println!("{}", result);
+        println!("{:#?}", result);
+        println!("{}", evaluate::evaluate(result));
     }
 
-    fn expr(&mut self) -> isize {
+    fn expr(&mut self) -> Expr {
         let mut left = self.term();
 
         while is_token!(self, TokenType::Plus, TokenType::Minus) {
             let op = self.advance();
             let right = self.term();
 
-            left = match op.token_type {
-                TokenType::Plus => left + right,
-                TokenType::Minus => left - right,
-                _ => unreachable!(),
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: op.token_type,
+                right: Box::new(right),
             };
         }
 
         left
     }
 
-    fn term(&mut self) -> isize {
+    fn term(&mut self) -> Expr {
         let mut left = self.factor();
 
         while is_token!(self, TokenType::Star, TokenType::Slash) {
             let op = self.advance();
             let right = self.factor();
 
-            left = match op.token_type {
-                TokenType::Star => left * right,
-                TokenType::Slash => left / right,
-                _ => unreachable!(),
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: op.token_type,
+                right: Box::new(right),
             };
         }
 
         left
     }
 
-    fn factor(&mut self) -> isize {
+    fn factor(&mut self) -> Expr {
         let mut left = self.number();
 
         while is_token!(self, TokenType::Power) {
             let op = self.advance();
-            let right = self.factor(); // maybe use factor() here
+            let right = self.factor();
 
-            left = match op.token_type {
-                TokenType::Power => left.pow(right as u32),
-                _ => unreachable!(),
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: op.token_type,
+                right: Box::new(right),
             };
         }
 
         left
     }
 
-    fn number(&mut self) -> isize {
+    fn number(&mut self) -> Expr {
         if is_token!(self, TokenType::Leftparen) {
             self.advance();
-            let value = self.expr();
+            let value = Expr::Grouping(Box::new(self.expr()));
             self.consume_token(TokenType::Rightparen, "expected closing parenthesis");
             return value;
         } else if is_token!(self, TokenType::Int) {
             let token = self.consume_token(TokenType::Int, "expected integer");
-            return token.lexeme.parse().unwrap();
+            return Expr::Int(token.lexeme.parse().unwrap());
         }
 
         Self::error(self.advance(), "expected parenthesis or integer");
