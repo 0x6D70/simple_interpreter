@@ -44,6 +44,12 @@ impl Parser {
     }
 
     pub fn parse(&mut self) {
+        let result = self.expr();
+
+        println!("{}", result);
+    }
+
+    fn expr(&mut self) -> isize {
         let mut left = self.term();
 
         while is_token!(self, TokenType::Plus, TokenType::Minus) {
@@ -53,11 +59,11 @@ impl Parser {
             left = match op.token_type {
                 TokenType::Plus => left + right,
                 TokenType::Minus => left - right,
-                _ => unreachable!()
+                _ => unreachable!(),
             };
         }
 
-        println!("{}", left);
+        left
     }
 
     fn term(&mut self) -> isize {
@@ -70,7 +76,7 @@ impl Parser {
             left = match op.token_type {
                 TokenType::Star => left * right,
                 TokenType::Slash => left / right,
-                _ => unreachable!()
+                _ => unreachable!(),
             };
         }
 
@@ -78,9 +84,33 @@ impl Parser {
     }
 
     fn factor(&mut self) -> isize {
-        let token = self.consume_token(TokenType::Int, "expected integer");
+        let mut left = self.number();
 
-        token.lexeme.parse().unwrap()
+        while is_token!(self, TokenType::Power) {
+            let op = self.advance();
+            let right = self.factor(); // maybe use factor() here
+
+            left = match op.token_type {
+                TokenType::Power => left.pow(right as u32),
+                _ => unreachable!(),
+            };
+        }
+
+        left
+    }
+
+    fn number(&mut self) -> isize {
+        if is_token!(self, TokenType::Leftparen) {
+            self.advance();
+            let value = self.expr();
+            self.consume_token(TokenType::Rightparen, "expected closing parenthesis");
+            return value;
+        } else if is_token!(self, TokenType::Int) {
+            let token = self.consume_token(TokenType::Int, "expected integer");
+            return token.lexeme.parse().unwrap();
+        }
+
+        Self::error(self.advance(), "expected parenthesis or integer");
     }
 
     fn consume_token(&mut self, token_type: TokenType, msg: &str) -> Token {
