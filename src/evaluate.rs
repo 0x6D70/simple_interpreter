@@ -14,12 +14,22 @@ pub fn evaluate(expr: Expr) -> isize {
                 TokenType::Power => left_value.pow(right_value as u32),
                 _ => unreachable!(),
             }
-        }
+        },
+        Expr::Unary { op, right } => {
+            let right_value = evaluate(*right);
+
+            match op {
+                TokenType::Plus => right_value,
+                TokenType::Minus => -right_value,
+                _ => unreachable!(),
+            }
+        },
         Expr::Grouping(expr_grouping) => evaluate(*expr_grouping),
         Expr::Int(value) => value,
     }
 }
 
+/*
 #[allow(dead_code)]
 pub fn evaluate_rpn(expr: Expr) {
     match expr {
@@ -72,3 +82,4 @@ pub fn evaluate_lisp(expr: Expr) {
         }
     }
 }
+*/

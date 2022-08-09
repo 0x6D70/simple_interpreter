@@ -39,6 +39,10 @@ pub enum Expr {
         op: TokenType,
         right: Box<Expr>,
     },
+    Unary {
+        op: TokenType,
+        right: Box<Expr>,
+    },
     Grouping(Box<Expr>),
     Int(isize),
 }
@@ -121,6 +125,22 @@ impl Parser {
         } else if is_token!(self, TokenType::Int) {
             let token = self.consume_token(TokenType::Int, "expected integer");
             return Expr::Int(token.lexeme.parse().unwrap());
+        } else if is_token!(self, TokenType::Minus, TokenType::Int) {
+            self.advance(); // skip the minus
+            let token = self.advance();
+            let value = Expr::Int(token.lexeme.parse().unwrap());
+            return Expr::Unary {
+                op: TokenType::Minus,
+                right: Box::new(value),
+            };
+        } else if is_token!(self, TokenType::Plus, TokenType::Int) {
+            self.advance(); // skip the plus
+            let token = self.advance();
+            let value = Expr::Int(token.lexeme.parse().unwrap());
+            return Expr::Unary {
+                op: TokenType::Plus,
+                right: Box::new(value),
+            };
         }
 
         Self::error(self.advance(), "expected parenthesis or integer");
