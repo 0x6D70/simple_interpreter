@@ -14,7 +14,7 @@ pub fn evaluate(expr: Expr) -> isize {
                 TokenType::Power => left_value.pow(right_value as u32),
                 _ => unreachable!(),
             }
-        },
+        }
         Expr::Unary { op, right } => {
             let right_value = evaluate(*right);
 
@@ -23,7 +23,7 @@ pub fn evaluate(expr: Expr) -> isize {
                 TokenType::Minus => -right_value,
                 _ => unreachable!(),
             }
-        },
+        }
         Expr::Grouping(expr_grouping) => evaluate(*expr_grouping),
         Expr::Int(value) => value,
     }
